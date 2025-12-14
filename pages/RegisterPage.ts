@@ -105,11 +105,18 @@ export class RegisterPage extends CommonPage {
         await this.enterConfirmPassword(confirmPassword);
         await this.enterFullName(fullName);
         await this.enterEmail(email);
+        
+        // Lưu URL hiện tại trước khi click đăng ký
+        const currentUrl = this.page.url();
+        
         await this.click(this.btnRegister);
         
         // Chờ popup thông báo đăng ký thành công hiển thị
         const successMsgLocator = await this.waitForRegisterMessage(15000);
         await successMsgLocator.waitFor({ state: 'visible', timeout: 10000 });
+        
+        // Đợi một chút để popup hiển thị ổn định
+        await this.page.waitForTimeout(1000);
     }
     
     async registerAndNavigateToLogin(account: string, password: string, confirmPassword: string, email: string, fullName: string) {
