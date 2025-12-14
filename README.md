@@ -91,7 +91,7 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
 });
-4. Implement Test Case Mới
+# 4. Implement Test Case Mới
 Tạo Page Object mới
 Bước 1: Tạo file trong pages/
 
@@ -139,7 +139,7 @@ Bước 3: Thêm script vào package.json
 }
 Chạy: npm run test:new-feature
 
-5. Report - Output và Xem Report
+# 5. Report - Output và Xem Report
 Report Output
 Sau khi chạy test, report được tạo trong:
 
@@ -161,7 +161,7 @@ Report sẽ tự động mở trong trình duyệt, hiển thị:
 Tổng quan: số test passed/failed/skipped
 Chi tiết từng test: timeline, screenshots, video
 Error messages chi tiết
-6. Command Line với Parameters
+# 6. Command Line với Parameters
 Các tham số thường dùng
 # Chạy test với browser hiển thị
 npx playwright test --headed
@@ -224,3 +224,4 @@ npm run test:login - Chạy test login
 npm run test:register - Chạy test register
 npm run test:logout - Chạy test logout
 npm run test:detail - Chạy test detail
+
