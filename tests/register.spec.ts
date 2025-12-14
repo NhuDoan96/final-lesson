@@ -9,15 +9,9 @@ test.describe("Register Functional Test", () => {
 
     //Step 0: Navigate to homepage
     await homePage.navigateTo("https://demo1.cybersoft.edu.vn/");
-    
-    // Wait to see homepage
-    await page.waitForTimeout(2000);
 
     //Step 1: Click Dang Ky
     await homePage.topBarNavigation.navigateRegisterPage();
-    
-    // Wait for register page to load
-    await page.waitForTimeout(3000);
 
     //Step 2: Enter account
     //Step 3: Enter password
@@ -41,15 +35,25 @@ test.describe("Register Functional Test", () => {
 
     //Step 8: Verify register successfully
     //VP1: "Dang ky thanh cong" message display
-    await expect(registerPage.getRegisterMsgLocator()).toBeVisible();
+    const successMsgLocator = await registerPage.waitForRegisterMessage(15000);
+    await expect(successMsgLocator).toBeVisible();
 
     //Step 9: Navigate to login page after successful registration
     await registerPage.navigateToLoginAfterRegister();
     
     //Step 10: Verify we are on login page
     //VP2: Login page should be displayed
-    const loginButton = page.getByRole('button', { name: 'Đăng nhập' });
-    await expect(loginButton).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    
+    // Verify màn hình login đã hiển thị
+    const isLoginDisplayed = await registerPage.isLoginPageDisplayed();
+    expect(isLoginDisplayed).toBe(true);
+    
+    // Verify các element của màn hình login
+    await expect(registerPage.getLoginPageLocator()).toBeVisible();
+    
+    // Verify URL chứa /login
+    await expect(page).toHaveURL(/\/login/);
   });
 
   test("Invalid Register Test", async ({ page }) => {
