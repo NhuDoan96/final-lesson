@@ -9,7 +9,10 @@
     "code-runner.ignoreSelection": true,
     "code-runner.customCommand": "cd $workspaceRoot && npx playwright test $relativeFile --headed",
     "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    }
+        // Set to null because Prettier extension (esbenp.prettier-vscode) is not installed
+        // To enable formatting: Install "Prettier - Code formatter" extension, then change this to "esbenp.prettier-vscode"
+        "editor.defaultFormatter": null
+    },
+    "workbench.sideBar.location": "left"
 }
 
