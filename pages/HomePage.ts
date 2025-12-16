@@ -10,7 +10,6 @@ export class HomePage extends CommonPage {
     private async clickWithFallback(locator: Locator): Promise<boolean> {
         try {
             await locator.scrollIntoViewIfNeeded();
-            await this.page.waitForTimeout(300);
             await locator.click({ force: true, timeout: 5000 });
             return true;
         } catch (e) {
@@ -19,7 +18,6 @@ export class HomePage extends CommonPage {
                 await locator.evaluate((el: HTMLElement) => {
                     (el as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'center' });
                 });
-                await this.page.waitForTimeout(500);
                 await locator.evaluate((el: HTMLElement) => {
                     if (el instanceof HTMLAnchorElement || el instanceof HTMLButtonElement) {
                         el.click();
@@ -34,7 +32,13 @@ export class HomePage extends CommonPage {
     
     async clickBuyTicketAnyMovie() {
         await this.page.waitForLoadState('networkidle');
-        await this.page.waitForTimeout(1000);
+        
+        // Đợi ít nhất một link detail xuất hiện
+        try {
+            await this.page.locator('a[href*="/detail/"]').first().waitFor({ state: 'attached', timeout: 10000 });
+        } catch (e) {
+            // Tiếp tục nếu không tìm thấy
+        }
         
         // 1. Tìm link có href="/detail/" và text chứa "MUA VÉ"
         const directLinks = this.page.locator('a[href*="/detail/"]');
@@ -53,11 +57,14 @@ export class HomePage extends CommonPage {
         
         // 2. Tìm bất kỳ link nào có href="/detail/" (không cần text)
         if (directCount > 0) {
-            const firstLink = directLinks.first();
-            const isVisible = await firstLink.isVisible({ timeout: 2000 }).catch(() => false);
-            if (isVisible) {
-                if (await this.clickWithFallback(firstLink)) {
-                    return;
+            // Thử tất cả các link detail
+            for (let i = 0; i < Math.min(directCount, 10); i++) {
+                const link = directLinks.nth(i);
+                const isVisible = await link.isVisible({ timeout: 2000 }).catch(() => false);
+                if (isVisible) {
+                    if (await this.clickWithFallback(link)) {
+                        return;
+                    }
                 }
             }
         }

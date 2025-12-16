@@ -56,14 +56,13 @@ export class RegisterPage extends CommonPage {
                 try {
                     const isVisible = await selector.isVisible({ timeout: 1000 }).catch(() => false);
                     if (isVisible) {
-                        console.log(`DEBUG: Tìm thấy popup thông báo đăng ký thành công`);
                         return selector;
                     }
                 } catch (e) {
                     continue;
                 }
             }
-            await this.page.waitForTimeout(500);
+            await this.page.waitForTimeout(100);
         }
         
         // Trả về locator mặc định nếu không tìm thấy
@@ -115,8 +114,8 @@ export class RegisterPage extends CommonPage {
         const successMsgLocator = await this.waitForRegisterMessage(15000);
         await successMsgLocator.waitFor({ state: 'visible', timeout: 10000 });
         
-        // Đợi một chút để popup hiển thị ổn định
-        await this.page.waitForTimeout(1000);
+        // Đợi popup hiển thị ổn định
+        await successMsgLocator.waitFor({ state: 'visible' });
     }
     
     async registerAndNavigateToLogin(account: string, password: string, confirmPassword: string, email: string, fullName: string) {
@@ -136,8 +135,8 @@ export class RegisterPage extends CommonPage {
         const successMsgLocator = await this.waitForRegisterMessage(15000);
         await successMsgLocator.waitFor({ state: 'visible', timeout: 10000 });
         
-        // Đợi một chút để popup hiển thị đầy đủ
-        await this.page.waitForTimeout(1000);
+        // Đợi popup hiển thị đầy đủ
+        await successMsgLocator.waitFor({ state: 'visible' });
         
         // Wait for page to be stable
         await this.page.waitForLoadState('networkidle');

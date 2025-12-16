@@ -37,9 +37,6 @@ test.describe("Register Functional Test", () => {
     //VP1: Popup "Đăng ký thành công" message display
     const successMsgLocator = await registerPage.waitForRegisterMessage(15000);
     await expect(successMsgLocator).toBeVisible();
-    
-    // Đợi một chút để popup hiển thị ổn định
-    await page.waitForTimeout(2000);
   });
 
   test("Invalid Register Test", async ({ page }) => {

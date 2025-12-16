@@ -72,14 +72,13 @@ export class PurchasePage extends CommonPage {
                 try {
                     const isVisible = await selector.isVisible({ timeout: 1000 }).catch(() => false);
                     if (isVisible) {
-                        console.log(`DEBUG: Tìm thấy success message`);
                         return selector;
                     }
                 } catch (e) {
                     continue;
                 }
             }
-            await this.page.waitForTimeout(500);
+            await this.page.waitForTimeout(100);
         }
         
         // Trả về locator mặc định nếu không tìm thấy
@@ -88,13 +87,8 @@ export class PurchasePage extends CommonPage {
 
     async selectShowtime() {
         // Chọn giờ chiếu phim bất kì
-        // Kiểm tra URL hiện tại
-        const currentURL = this.page.url();
-        console.log(`DEBUG: URL hiện tại khi chọn giờ chiếu: ${currentURL}`);
-        
         // Đợi trang load xong
         await this.page.waitForLoadState('networkidle');
-        await this.page.waitForTimeout(2000);
 
         // Thử nhiều selector khác nhau để tìm giờ chiếu
         const showtimeSelectors = [
@@ -137,7 +131,6 @@ export class PurchasePage extends CommonPage {
                     await selector.first().waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
                     
                     const count = await selector.count().catch(() => 0);
-                    console.log(`DEBUG: Selector ${selectorIndex} tìm thấy ${count} elements`);
                     if (count === 0) continue;
 
                     // Tìm giờ chiếu đầu tiên có thể click được
@@ -146,7 +139,6 @@ export class PurchasePage extends CommonPage {
                         
                         // Kiểm tra text có phải là giờ không
                         const text = (await showtime.textContent().catch(() => "") || "").trim();
-                        console.log(`DEBUG: Element ${i} text: "${text}"`);
                         
                         // Kiểm tra text có phải là giờ chiếu
                         let isShowtime = false;
@@ -189,7 +181,7 @@ export class PurchasePage extends CommonPage {
                         if (!isVisible) {
                             // Thử scroll để thấy element
                             await showtime.scrollIntoViewIfNeeded().catch(() => {});
-                            await this.page.waitForTimeout(500);
+                            await this.page.waitForTimeout(100);
                             const isVisibleAfterScroll = await showtime.isVisible({ timeout: 1000 }).catch(() => false);
                             if (!isVisibleAfterScroll) continue;
                         }
@@ -198,12 +190,10 @@ export class PurchasePage extends CommonPage {
                         const isDisabled = await showtime.getAttribute('disabled').catch(() => null);
                         
                         if (isEnabled && !isDisabled) {
-                            console.log(`DEBUG: Tìm thấy giờ chiếu: "${text}"`);
                             await showtime.scrollIntoViewIfNeeded().catch(() => {});
-                            await this.page.waitForTimeout(300);
                             await this.click(showtime);
-                            // Đợi một chút sau khi click để trang cập nhật
-                            await this.page.waitForTimeout(1000);
+                            // Đợi trang cập nhật sau khi click
+                            await this.page.waitForLoadState('networkidle').catch(() => {});
                             return;
                         }
                     }
@@ -215,7 +205,7 @@ export class PurchasePage extends CommonPage {
             
             // Nếu không tìm thấy, đợi thêm và thử lại
             if (attempt < 2) {
-                await this.page.waitForTimeout(2000);
+                await this.page.waitForLoadState('networkidle').catch(() => {});
             }
         }
 
@@ -226,9 +216,8 @@ export class PurchasePage extends CommonPage {
             if (showtimeCount > 0) {
                 const firstShowtime = this.btnShowtime.first();
                 await firstShowtime.scrollIntoViewIfNeeded().catch(() => {});
-                await this.page.waitForTimeout(300);
                 await this.click(firstShowtime);
-                await this.page.waitForTimeout(1000);
+                await this.page.waitForLoadState('networkidle').catch(() => {});
                 return;
             }
         } catch (e) {
@@ -241,17 +230,14 @@ export class PurchasePage extends CommonPage {
     async selectSeat() {
         // Chọn ghế thường hoặc ghế VIP bất kì
         await this.page.waitForLoadState('networkidle');
-        await this.page.waitForTimeout(5000); // Tăng lên 5 giây để đảm bảo trang load đầy đủ
-        
-        // Đợi thêm để ghế render
-        await this.page.waitForTimeout(2000);
+        // Đợi ghế render - đợi ít nhất một ghế xuất hiện
+        await this.page.locator("[class*='ghe'], [class*='seat']").first().waitFor({ state: 'attached', timeout: 10000 }).catch(() => {});
         
         const maxAttempts = 5; // Tăng số lần thử
         const startTime = Date.now();
         const maxTime = 60000; // Tăng timeout lên 60 giây
 
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            console.log(`DEBUG: Attempt ${attempt + 1} tìm ghế`);
             // Kiểm tra timeout tổng thể
             if (Date.now() - startTime > maxTime) {
                 break;
@@ -272,7 +258,6 @@ export class PurchasePage extends CommonPage {
                     continue;
                 }
                 const count = await group.count().catch(() => 0);
-                console.log(`DEBUG: Group ${groupIndex} tìm thấy ${count} elements`);
                 if (!count) continue;
 
                 // Try first N seats to find an available one (tăng lên 100)
@@ -308,22 +293,16 @@ export class PurchasePage extends CommonPage {
                     const visible = await seatCandidate.isVisible({ timeout: 1000 }).catch(() => false);
                     if (!visible) {
                         await seatCandidate.scrollIntoViewIfNeeded().catch(() => {});
-                        await this.page.waitForTimeout(300);
                         const isVisibleAfterScroll = await seatCandidate.isVisible({ timeout: 500 }).catch(() => false);
                         if (!isVisibleAfterScroll) continue;
                     }
 
                     // Click vào ghế
-                    console.log(`DEBUG: Tìm thấy ghế tại group ${groupIndex}, index ${i}, text: "${text}", class: "${className}"`);
                     await seatCandidate.scrollIntoViewIfNeeded().catch(() => {});
-                    await this.page.waitForTimeout(200);
                     try {
                         await seatCandidate.click({ force: true, timeout: 5000 });
-                        await this.page.waitForTimeout(500);
-                        console.log(`DEBUG: Đã click vào ghế thành công`);
                         return;
                     } catch (clickError) {
-                        console.log(`DEBUG: Lỗi khi click ghế: ${clickError}`);
                         continue;
                     }
                 }
@@ -331,21 +310,15 @@ export class PurchasePage extends CommonPage {
 
             // small wait then retry
             if (attempt < maxAttempts - 1) {
-                console.log(`DEBUG: Không tìm thấy ghế ở attempt ${attempt + 1}, đợi và thử lại...`);
-                await this.delay(2000);
                 // Đợi thêm để trang có thể load thêm elements
                 await this.page.waitForLoadState('networkidle').catch(() => {});
-                await this.page.waitForTimeout(2000);
             }
         }
 
         // Trước khi throw error, thử tìm bất kỳ element nào có thể là ghế
-        console.log(`DEBUG: Thử tìm ghế với selector tổng quát hơn...`);
-        
         // Tìm các element có thể là ghế (có class chứa "ghe" hoặc "seat", hoặc nằm trong container ghế)
         const allPossibleSeats = this.page.locator("button[class*='ghe'], button[class*='seat'], div[role='button'][class*='ghe'], div[role='button'][class*='seat'], [onclick][class*='ghe'], [onclick][class*='seat']");
         const allCount = await allPossibleSeats.count().catch(() => 0);
-        console.log(`DEBUG: Tìm thấy ${allCount} elements có thể là ghế (có class ghe/seat)`);
         
         if (allCount > 0) {
             // Thử click vào các element có thể là ghế
@@ -365,15 +338,10 @@ export class PurchasePage extends CommonPage {
                 const isVisible = await seat.isVisible({ timeout: 1000 }).catch(() => false);
                 if (isVisible) {
                     try {
-                        console.log(`DEBUG: Thử click vào element ${i}, text: "${text}", class: "${className}"`);
                         await seat.scrollIntoViewIfNeeded().catch(() => {});
-                        await this.page.waitForTimeout(200);
                         await seat.click({ force: true, timeout: 5000 });
-                        await this.page.waitForTimeout(500);
-                        console.log(`DEBUG: Đã click vào ghế thành công`);
                         return;
                     } catch (e) {
-                        console.log(`DEBUG: Không thể click vào element ${i}: ${e}`);
                         continue;
                     }
                 }
@@ -381,10 +349,8 @@ export class PurchasePage extends CommonPage {
         }
         
         // Fallback cuối cùng: tìm bất kỳ button nào (nhưng ưu tiên các button nhỏ, có thể là ghế)
-        console.log(`DEBUG: Thử fallback cuối cùng...`);
         const fallbackButtons = this.page.locator("button:not([disabled])");
         const fallbackCount = await fallbackButtons.count().catch(() => 0);
-        console.log(`DEBUG: Tìm thấy ${fallbackCount} button có thể click`);
         
         if (fallbackCount > 0) {
             // Thử click vào button nhỏ (có thể là ghế)
@@ -406,12 +372,8 @@ export class PurchasePage extends CommonPage {
                             continue;
                         }
                         
-                        console.log(`DEBUG: Thử click vào button ${i}, text: "${text}"`);
                         await button.scrollIntoViewIfNeeded().catch(() => {});
-                        await this.page.waitForTimeout(200);
                         await button.click({ force: true, timeout: 5000 });
-                        await this.page.waitForTimeout(500);
-                        console.log(`DEBUG: Đã click vào button thành công`);
                         return;
                     } catch (e) {
                         continue;
@@ -426,7 +388,6 @@ export class PurchasePage extends CommonPage {
     async clickBookTicket() {
         // Nhấn đặt vé
         await this.page.waitForLoadState('networkidle');
-        await this.page.waitForTimeout(1000);
         
         // Thử nhiều cách để tìm nút "Đặt vé"
         const bookButtonSelectors = [
@@ -452,13 +413,10 @@ export class PurchasePage extends CommonPage {
                     const firstButton = button.first();
                     const isVisible = await firstButton.isVisible({ timeout: 3000 }).catch(() => false);
                     if (isVisible) {
-                        console.log(`DEBUG: Tìm thấy nút đặt vé với selector ${i}`);
                         await firstButton.scrollIntoViewIfNeeded().catch(() => {});
-                        await this.page.waitForTimeout(300);
                         await this.click(firstButton);
                         // Đợi sau khi click để message hiển thị
                         await this.page.waitForLoadState('networkidle').catch(() => {});
-                        await this.page.waitForTimeout(2000);
                         return;
                     }
                 }
@@ -472,7 +430,6 @@ export class PurchasePage extends CommonPage {
             await this.btnBook.waitFor({ state: 'visible', timeout: 5000 });
             await this.click(this.btnBook);
             await this.page.waitForLoadState('networkidle').catch(() => {});
-            await this.page.waitForTimeout(2000);
         } catch (e) {
             throw new Error("Không tìm thấy nút 'Đặt vé'");
         }
@@ -482,7 +439,6 @@ export class PurchasePage extends CommonPage {
         // Tại màn hình purchase (giờ chiếu đã được chọn ở detail page)
         // Đợi trang load xong
         await this.page.waitForLoadState('networkidle');
-        await this.page.waitForTimeout(2000);
         
         // Step 1: Chọn ghế thường hoặc ghế VIP bất kì
         await this.selectSeat();
@@ -492,10 +448,6 @@ export class PurchasePage extends CommonPage {
 
     async getSuccessMessage(): Promise<string | null> {
         return await this.getText(this.lblSuccessMsg);
-    }
-
-    private async delay(ms: number) {
-        return new Promise<void>((resolve) => setTimeout(resolve, ms));
     }
 }
 

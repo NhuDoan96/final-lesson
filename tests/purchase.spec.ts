@@ -29,6 +29,8 @@ test.describe("Purchase Functional Test", () => {
 
     //Step 6: Vào trang home chọn mua vé bất kỳ
     await homePage.navigateTo("https://demo1.cybersoft.edu.vn/");
+    // Đợi trang home load xong
+    await page.waitForLoadState('networkidle');
     await homePage.clickBuyTicketAnyMovie();
 
     //Step 7: Hiển thị trang detail
@@ -37,6 +39,8 @@ test.describe("Purchase Functional Test", () => {
 
     //Step 8: Chọn giờ chiếu phim bất kì ở detail page
     await detailPage.selectShowtime();
+    // Đợi trang load xong sau khi chọn giờ chiếu
+    await page.waitForLoadState('networkidle');
 
     //Step 9: Navigate to purchase page từ detail page
     await detailPage.navigateToPurchasePage();

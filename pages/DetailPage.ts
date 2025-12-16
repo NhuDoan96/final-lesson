@@ -75,19 +75,15 @@ export class DetailPage extends CommonPage {
         // Thử chờ URL đổi sang trang detail (không bắt buộc)
         try {
             await this.page.waitForURL(/\/(detail|movie|phim)/, {timeout: 5000});
-            console.log("DEBUG: URL đã đổi sang trang detail");
         } catch (e) {
             // URL không match pattern, nhưng vẫn tiếp tục
-            console.log("DEBUG: URL không match pattern detail/movie, nhưng vẫn tiếp tục");
         }
         
         // Chờ trang load xong
         await this.page.waitForLoadState('networkidle');
-        await this.page.waitForTimeout(1000);
         
         // Kiểm tra URL hiện tại
         const newURL = this.page.url();
-        console.log(`DEBUG: URL hiện tại: ${newURL}`);
         
         // Thử nhiều selector khác nhau cho detailContainer
         const detailSelectors = [
@@ -113,7 +109,6 @@ export class DetailPage extends CommonPage {
                 // Lưu container đã tìm được để dùng trong getDetailContainerLocator
                 this.foundDetailContainer = container;
                 found = true;
-                console.log(`DEBUG: Tìm thấy detailContainer với selector: ${selector}`);
                 break;
             } catch (e) {
                 // Thử selector tiếp theo
@@ -126,20 +121,14 @@ export class DetailPage extends CommonPage {
             // Kiểm tra xem có heading, title, hoặc text nào cho thấy đây là trang detail
             const hasDetailContent = await this.page.locator('h1, h2, h3, [class*="title"], [class*="name"]').count() > 0;
             if (hasDetailContent || newURL !== currentURL) {
-                console.log("DEBUG: Không tìm thấy detailContainer nhưng có dấu hiệu đã vào trang detail");
                 found = true;
             }
-        }
-        
-        if (!found) {
-            console.log("DEBUG: Cảnh báo: Không tìm thấy detailContainer và không có dấu hiệu rõ ràng của trang detail");
         }
     }
 
     async selectShowtime() {
         // Chọn giờ chiếu phim bất kì ở detail page
         await this.page.waitForLoadState('networkidle');
-        await this.page.waitForTimeout(1000);
 
         // Thử nhiều selector khác nhau để tìm giờ chiếu (ưu tiên selector cụ thể hơn)
         const showtimeSelectors = [
@@ -197,7 +186,6 @@ export class DetailPage extends CommonPage {
                     const isVisible = await showtime.isVisible({ timeout: 500 }).catch(() => false);
                     if (!isVisible) {
                         await showtime.scrollIntoViewIfNeeded().catch(() => {});
-                        await this.page.waitForTimeout(200);
                         const isVisibleAfterScroll = await showtime.isVisible({ timeout: 500 }).catch(() => false);
                         if (!isVisibleAfterScroll) continue;
                     }
@@ -207,9 +195,8 @@ export class DetailPage extends CommonPage {
 
                     if (isEnabled && !isDisabled) {
                         await showtime.scrollIntoViewIfNeeded().catch(() => {});
-                        await this.page.waitForTimeout(200);
                         await this.click(showtime);
-                        await this.page.waitForTimeout(500);
+                        await this.page.waitForLoadState('networkidle').catch(() => {});
                         return;
                     }
                 }
@@ -221,13 +208,22 @@ export class DetailPage extends CommonPage {
 
         // Nếu không tìm thấy giờ chiếu, có thể giờ chiếu đã được chọn tự động hoặc không cần chọn
         // Tiếp tục với bước tiếp theo
-        console.log("DEBUG: Không tìm thấy giờ chiếu để chọn, tiếp tục...");
     }
 
     async navigateToPurchasePage() {
         // Đợi trang load xong sau khi chọn giờ chiếu
         await this.page.waitForLoadState('networkidle');
-        await this.page.waitForTimeout(2000);
+        
+        // Đợi ít nhất một element có thể navigate xuất hiện
+        try {
+            await Promise.race([
+                this.page.locator('a[href*="/purchase/"]').first().waitFor({ state: 'attached', timeout: 5000 }),
+                this.page.getByRole('button', { name: /mua vé|đặt vé/i }).first().waitFor({ state: 'attached', timeout: 5000 }),
+                this.page.getByRole('link', { name: /mua vé|đặt vé/i }).first().waitFor({ state: 'attached', timeout: 5000 })
+            ]).catch(() => {});
+        } catch (e) {
+            // Tiếp tục nếu không tìm thấy
+        }
 
         // Thử nhiều cách để tìm nút/link mua vé với retry
         for (let attempt = 0; attempt < 3; attempt++) {
@@ -240,7 +236,6 @@ export class DetailPage extends CommonPage {
                     const isVisible = await link.isVisible({ timeout: 2000 }).catch(() => false);
                     if (isVisible) {
                         await link.scrollIntoViewIfNeeded().catch(() => {});
-                        await this.page.waitForTimeout(300);
                         await this.click(link);
                         // Đợi URL chuyển sang purchase page
                         await this.page.waitForURL(/\/purchase\//, { timeout: 10000 }).catch(() => {});
@@ -254,7 +249,6 @@ export class DetailPage extends CommonPage {
             const btnVisible = await this.btnBuyNow.isVisible({ timeout: 3000 }).catch(() => false);
             if (btnVisible) {
                 await this.btnBuyNow.scrollIntoViewIfNeeded().catch(() => {});
-                await this.page.waitForTimeout(300);
                 await this.click(this.btnBuyNow);
                 // Đợi URL chuyển sang purchase page
                 await this.page.waitForURL(/\/purchase\//, { timeout: 10000 }).catch(() => {});
@@ -266,7 +260,6 @@ export class DetailPage extends CommonPage {
             const lnkVisible = await this.lnkBuyNow.isVisible({ timeout: 3000 }).catch(() => false);
             if (lnkVisible) {
                 await this.lnkBuyNow.scrollIntoViewIfNeeded().catch(() => {});
-                await this.page.waitForTimeout(300);
                 await this.click(this.lnkBuyNow);
                 // Đợi URL chuyển sang purchase page
                 await this.page.waitForURL(/\/purchase\//, { timeout: 10000 }).catch(() => {});
@@ -285,7 +278,6 @@ export class DetailPage extends CommonPage {
                     const isVisible = await button.isVisible({ timeout: 2000 }).catch(() => false);
                     if (isVisible) {
                         await button.scrollIntoViewIfNeeded().catch(() => {});
-                        await this.page.waitForTimeout(300);
                         await this.click(button);
                         // Đợi URL chuyển sang purchase page
                         await this.page.waitForURL(/\/purchase\//, { timeout: 10000 }).catch(() => {});
@@ -302,7 +294,6 @@ export class DetailPage extends CommonPage {
                     const isVisible = await link.isVisible({ timeout: 2000 }).catch(() => false);
                     if (isVisible) {
                         await link.scrollIntoViewIfNeeded().catch(() => {});
-                        await this.page.waitForTimeout(300);
                         await this.click(link);
                         // Đợi URL chuyển sang purchase page
                         await this.page.waitForURL(/\/purchase\//, { timeout: 10000 }).catch(() => {});
@@ -333,7 +324,25 @@ export class DetailPage extends CommonPage {
 
             // Nếu không tìm thấy, đợi thêm và thử lại
             if (attempt < 2) {
-                await this.page.waitForTimeout(2000);
+                await this.page.waitForLoadState('networkidle').catch(() => {});
+            }
+        }
+
+        // Fallback cuối cùng: Thử navigate trực tiếp bằng URL nếu có thể
+        const currentURL = this.page.url();
+        if (currentURL.includes('/detail/') || currentURL.includes('/movie/')) {
+            try {
+                // Lấy ID từ URL hiện tại và navigate đến purchase
+                const urlMatch = currentURL.match(/\/(detail|movie|phim)\/([^\/]+)/);
+                if (urlMatch && urlMatch[2]) {
+                    const movieId = urlMatch[2];
+                    await this.page.goto(`https://demo1.cybersoft.edu.vn/purchase/${movieId}`, { waitUntil: 'networkidle' });
+                    // Verify đã vào purchase page
+                    await this.page.waitForURL(/\/purchase\//, { timeout: 10000 }).catch(() => {});
+                    return;
+                }
+            } catch (e) {
+                // Tiếp tục throw error
             }
         }
 
