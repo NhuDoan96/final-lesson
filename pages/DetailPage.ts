@@ -236,6 +236,7 @@ export class DetailPage extends CommonPage {
                     const isVisible = await link.isVisible({ timeout: 2000 }).catch(() => false);
                     if (isVisible) {
                         await link.scrollIntoViewIfNeeded().catch(() => {});
+                        await this.page.waitForTimeout(300);
                         await this.click(link);
                         // Đợi URL chuyển sang purchase page
                         await this.page.waitForURL(/\/purchase\//, { timeout: 10000 }).catch(() => {});
@@ -249,6 +250,7 @@ export class DetailPage extends CommonPage {
             const btnVisible = await this.btnBuyNow.isVisible({ timeout: 3000 }).catch(() => false);
             if (btnVisible) {
                 await this.btnBuyNow.scrollIntoViewIfNeeded().catch(() => {});
+                await this.page.waitForTimeout(300);
                 await this.click(this.btnBuyNow);
                 // Đợi URL chuyển sang purchase page
                 await this.page.waitForURL(/\/purchase\//, { timeout: 10000 }).catch(() => {});
@@ -260,6 +262,7 @@ export class DetailPage extends CommonPage {
             const lnkVisible = await this.lnkBuyNow.isVisible({ timeout: 3000 }).catch(() => false);
             if (lnkVisible) {
                 await this.lnkBuyNow.scrollIntoViewIfNeeded().catch(() => {});
+                await this.page.waitForTimeout(300);
                 await this.click(this.lnkBuyNow);
                 // Đợi URL chuyển sang purchase page
                 await this.page.waitForURL(/\/purchase\//, { timeout: 10000 }).catch(() => {});
@@ -278,6 +281,7 @@ export class DetailPage extends CommonPage {
                     const isVisible = await button.isVisible({ timeout: 2000 }).catch(() => false);
                     if (isVisible) {
                         await button.scrollIntoViewIfNeeded().catch(() => {});
+                        await this.page.waitForTimeout(300);
                         await this.click(button);
                         // Đợi URL chuyển sang purchase page
                         await this.page.waitForURL(/\/purchase\//, { timeout: 10000 }).catch(() => {});
@@ -294,6 +298,7 @@ export class DetailPage extends CommonPage {
                     const isVisible = await link.isVisible({ timeout: 2000 }).catch(() => false);
                     if (isVisible) {
                         await link.scrollIntoViewIfNeeded().catch(() => {});
+                        await this.page.waitForTimeout(300);
                         await this.click(link);
                         // Đợi URL chuyển sang purchase page
                         await this.page.waitForURL(/\/purchase\//, { timeout: 10000 }).catch(() => {});

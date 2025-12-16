@@ -113,9 +113,6 @@ export class RegisterPage extends CommonPage {
         // Chờ popup thông báo đăng ký thành công hiển thị
         const successMsgLocator = await this.waitForRegisterMessage(15000);
         await successMsgLocator.waitFor({ state: 'visible', timeout: 10000 });
-        
-        // Đợi popup hiển thị ổn định
-        await successMsgLocator.waitFor({ state: 'visible' });
     }
     
     async registerAndNavigateToLogin(account: string, password: string, confirmPassword: string, email: string, fullName: string) {
@@ -134,9 +131,6 @@ export class RegisterPage extends CommonPage {
         // Wait for popup register success message to be visible
         const successMsgLocator = await this.waitForRegisterMessage(15000);
         await successMsgLocator.waitFor({ state: 'visible', timeout: 10000 });
-        
-        // Đợi popup hiển thị đầy đủ
-        await successMsgLocator.waitFor({ state: 'visible' });
         
         // Wait for page to be stable
         await this.page.waitForLoadState('networkidle');
